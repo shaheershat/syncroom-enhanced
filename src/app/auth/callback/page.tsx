@@ -1,16 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/stores/auth-store';
 
-export default function AuthCallbackPage() {
+function AuthCallbackInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuthStore();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -20,12 +18,11 @@ export default function AuthCallbackPage() {
 
         if (code) {
           const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-          
+
           if (sessionError) {
             throw sessionError;
           }
 
-          // Check if user is approved
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (authUser) {
             const { data: userData, error: userError } = await supabase
@@ -44,8 +41,8 @@ export default function AuthCallbackPage() {
         } else {
           throw new Error('No authentication code found');
         }
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Authentication failed');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Authentication failed');
         setLoading(false);
       }
     };
@@ -97,4 +94,16 @@ export default function AuthCallbackPage() {
   }
 
   return null;
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+      </div>
+    }>
+      <AuthCallbackInner />
+    </Suspense>
+  );
 }
