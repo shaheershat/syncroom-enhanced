@@ -212,15 +212,15 @@ export default function RoomPage() {
 
         {/* Chat Overlay for Fullscreen - Desktop */}
         {showChat && isFullscreen && !isMobile && (
-          <div className="fixed top-4 right-4 w-80 z-50">
-            <ChatPanel roomId={room.id} messages={messages} overlay={true} />
+          <div className="fixed top-16 right-4 w-80 h-[70vh] z-50 bg-slate-800 rounded-lg overflow-hidden border border-white/10 flex flex-col">
+            <ChatPanel roomId={room.id} messages={messages} />
           </div>
         )}
 
         {/* Chat Overlay for Fullscreen - Mobile landscape */}
         {showChat && isFullscreen && isMobile && (
-          <div className="fixed top-0 left-0 right-0 z-50">
-            <ChatPanel roomId={room.id} messages={messages} overlay={true} />
+          <div className="fixed top-16 left-0 right-0 h-64 z-50 bg-slate-800 border-b border-white/10 overflow-hidden flex flex-col">
+            <ChatPanel roomId={room.id} messages={messages} />
           </div>
         )}
       </div>
