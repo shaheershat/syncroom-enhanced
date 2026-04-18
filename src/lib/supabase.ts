@@ -1,16 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+let _client: ReturnType<typeof createClient<Database>> | null = null;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-}) as any; // Type assertion to bypass inference issues while maintaining runtime functionality
+const getClient = () => {
+  if (!_client) {
+    _client = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+      }
+    );
+  }
+  return _client;
+};
+
+// Proxy defers client creation until first property access (safe during SSR/build)
+export const supabase: any = new Proxy(
+  {} as any,
+  { get: (_, prop) => (getClient() as any)[prop as string] }
+);
 
 // Realtime channel utilities
 export const createRoomChannel = async (roomId: string) => {
