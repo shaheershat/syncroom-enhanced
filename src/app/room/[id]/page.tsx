@@ -192,7 +192,7 @@ export default function RoomPage() {
       {/* Main Content */}
       <div className={`${isMobile ? 'flex flex-col' : 'flex'} ${isFullscreen ? 'h-screen' : 'h-[calc(100vh-60px)]'}`}>
         {/* Video Section */}
-        <div className={`${isMobile ? 'flex-1' : 'flex-1 relative'} ${showChat && !isFullscreen && !isMobile ? 'mr-80' : ''}`}>
+        <div className={`${isMobile ? 'flex-1' : 'flex-1 relative'}`}>
           <VideoPlayer
             ref={videoRef}
             videoUrl={room.video?.video_url || ''}
@@ -210,20 +210,27 @@ export default function RoomPage() {
           </div>
         )}
 
-        {/* Chat Overlay for Fullscreen */}
-        {showChat && isFullscreen && (
+        {/* Chat Overlay for Fullscreen - Desktop */}
+        {showChat && isFullscreen && !isMobile && (
           <div className="fixed top-4 right-4 w-80 z-50">
+            <ChatPanel roomId={room.id} messages={messages} overlay={true} />
+          </div>
+        )}
+
+        {/* Chat Overlay for Fullscreen - Mobile landscape */}
+        {showChat && isFullscreen && isMobile && (
+          <div className="fixed top-0 left-0 right-0 z-50">
             <ChatPanel roomId={room.id} messages={messages} overlay={true} />
           </div>
         )}
       </div>
 
-      {/* Overlay Chat (when chat is closed or fullscreen) - Mobile only */}
-      {(!showChat || isFullscreen) && isMobile && (
+      {/* Overlay Chat (when chat is closed) - Mobile only */}
+      {!showChat && isMobile && (
         <div className="fixed bottom-4 left-4 right-4 max-w-md z-40">
-          <ChatPanel 
-            roomId={room.id} 
-            messages={messages.slice(-3)} 
+          <ChatPanel
+            roomId={room.id}
+            messages={messages.slice(-3)}
             overlay={true}
           />
         </div>
