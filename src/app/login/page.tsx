@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, Sparkles, Shield } from 'lucide-react';
-import { authenticateUser } from '@/lib/auth-actions';
+
+const USERS = [
+  { username: 'shaheer', code: 'SHAHEER123', name: 'Shaheer', role: 'admin' as const, id: 'user-shaheer' },
+  { username: 'admin',   code: 'ADMIN123',   name: 'Admin',   role: 'admin' as const, id: 'user-admin' },
+];
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -11,7 +15,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,23 +23,18 @@ export default function LoginPage() {
     setIsLoading(true);
     setMessage('');
 
-    try {
-      const result = await authenticateUser(username, accessCode);
+    const match = USERS.find(
+      u => u.username === username.trim().toLowerCase() && u.code === accessCode.trim()
+    );
 
-      if (result.success && result.user) {
-        // Redirect based on user role
-        if (result.user.role === 'admin') {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
-        }
-      } else {
-        setMessage(result.error || 'Login failed');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      setMessage(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
+    if (match) {
+      const user = { id: match.id, name: match.name, username: match.username, role: match.role };
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      // Set session cookie so proxy allows access to protected routes
+      document.cookie = `syncroom_session=1; path=/; max-age=${2 * 24 * 60 * 60}`;
+      router.push(match.role === 'admin' ? '/admin' : '/dashboard');
+    } else {
+      setMessage('Invalid username or access code');
       setIsLoading(false);
     }
   };
