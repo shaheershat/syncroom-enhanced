@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Plus, Users, Film, LogOut, Clock, User, Trash2 } from 'lucide-react';
 import { User as UserType, Video, RoomWithDetails } from '@/types';
 import VideoManager from '@/components/video-manager';
-import { supabase } from '@/lib/supabase';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -41,29 +40,14 @@ export default function DashboardPage() {
       setCurrentUser(userData);
       
       const loadData = async () => {
-        // Load real data from Supabase
         try {
-          console.log('Loading dashboard data for user:', userData.id);
-          
-          const { data: roomsData, error: roomsError } = await supabase
-            .from('rooms')
-            .select('*')
-            .eq('created_by', userData.id);
-
-          console.log('Rooms data:', roomsData, 'Error:', roomsError);
-
-          // Load aligned rooms (rooms where user is invited)
-          const { data: alignedRoomsData, error: alignedRoomsError } = await supabase
-            .from('rooms')
-            .select('*')
-            .eq('invited_user_id', userData.id);
-
-          console.log('Aligned rooms data:', alignedRoomsData, 'Error:', alignedRoomsError);
-
-          const [videosRes, usersRes] = await Promise.all([
+          const [roomsRes, videosRes, usersRes] = await Promise.all([
+            fetch(`/api/data/rooms?userId=${userData.id}`).then(r => r.json()),
             fetch('/api/data/videos').then(r => r.json()),
             fetch('/api/data/users').then(r => r.json()),
           ])
+          const roomsData = roomsRes.created || []
+          const alignedRoomsData = roomsRes.invited || []
           const videosData = videosRes.videos || []
           const usersData = (usersRes.users || []).filter((u: any) => u.id !== userData.id)
 
@@ -125,14 +109,7 @@ const isSessionValid = () => {
     try {
       console.log('Deleting room:', roomId);
       
-      // Delete related messages first
-      await supabase.from('messages').delete().eq('room_id', roomId);
-      
-      // Delete related room state
-      await supabase.from('room_state').delete().eq('room_id', roomId);
-      
-      // Delete the room
-      await supabase.from('rooms').delete().eq('id', roomId);
+      await fetch(`/api/data/rooms?roomId=${roomId}`, { method: 'DELETE' });
       
       // Update local state
       setActiveRooms(prev => prev.filter(room => room.id !== roomId));
@@ -157,28 +134,20 @@ const isSessionValid = () => {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('rooms')
-        .insert({
+      const res = await fetch('/api/data/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           created_by: currentUser.id,
           invited_user_id: selectedUser,
           video_id: selectedVideo,
-          status: 'active'
-        } as any)
-        .select()
-        .single();
-
-      console.log('Supabase response:', { data, error });
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-
-      if (!data) {
-        console.error('No data returned from room creation');
-        throw new Error('Failed to create room - no data returned');
-      }
+          status: 'active',
+        }),
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      const data = json.room;
+      if (!data) throw new Error('Failed to create room');
 
       console.log('Room created successfully:', data);
       
@@ -204,11 +173,8 @@ const isSessionValid = () => {
   };
 
   const handleVideoUploaded = async (video: Video) => {
-    // Refresh videos list
-    const { data } = await supabase
-      .from('videos')
-      .select('*');
-    setVideos(data || []);
+    const res = await fetch('/api/data/videos').then(r => r.json());
+    setVideos(res.videos || []);
     setShowVideoUpload(false);
   };
 
