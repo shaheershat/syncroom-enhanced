@@ -1,16 +1,28 @@
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+let _supabase: ReturnType<typeof createClient> | null = null
 
-export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
-    flowType: 'pkce'
+const getSupabase = () => {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false,
+          flowType: 'pkce'
+        }
+      }
+    )
   }
+  return _supabase
+}
+
+export const supabase: any = new Proxy({} as any, {
+  get: (_, prop) => (getSupabase() as any)[prop as string]
 })
 
 export interface User {
