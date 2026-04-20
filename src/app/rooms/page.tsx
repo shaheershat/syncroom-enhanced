@@ -86,7 +86,7 @@ export default function RoomsPage() {
         if (error) throw error
 
         // Process rooms data
-        const processedRooms = roomsData.map(room => ({
+        const processedRooms = roomsData.map((room: any) => ({
           ...room,
           member_count: room.room_members?.length || 0,
           online_count: room.room_members?.filter((m: any) => m.user?.is_online).length || 0

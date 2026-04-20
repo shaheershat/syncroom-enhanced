@@ -119,7 +119,7 @@ export default function RoomPage() {
           .channel(`room-${roomId}`)
           .on('postgres_changes', 
             { event: '*', schema: 'public', table: 'room_state', filter: `room_id=eq.${roomId}` },
-            (payload) => {
+            (payload: any) => {
               if (payload.new) {
                 const newState = payload.new as RoomState
                 setRoomState(newState)
@@ -130,7 +130,7 @@ export default function RoomPage() {
           )
           .on('postgres_changes',
             { event: '*', schema: 'public', table: 'messages', filter: `room_id=eq.${roomId}` },
-            (payload) => {
+            (payload: any) => {
               if (payload.eventType === 'INSERT') {
                 setMessages(prev => [payload.new as Message, ...prev])
               }
@@ -138,7 +138,7 @@ export default function RoomPage() {
           )
           .on('postgres_changes',
             { event: '*', schema: 'public', table: 'room_members', filter: `room_id=eq.${roomId}` },
-            (payload) => {
+            (payload: any) => {
               if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                 setMembers(prev => {
                   const updated = prev.filter(m => m.user_id !== payload.new.user_id)
