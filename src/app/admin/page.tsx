@@ -36,7 +36,7 @@ export default async function AdminDashboard() {
     totalVideos: videos.length,
     pendingRequests: pendingRequests.length,
     activeRooms: activeRooms.length,
-    onlineUsers: users.filter(u => u.is_online).length
+    onlineUsers: users.filter((u: any) => u.is_online).length
   }
 
   const recentActivity = [
@@ -189,7 +189,7 @@ export default async function AdminDashboard() {
               </a>
             </div>
             <div className="space-y-3">
-              {pendingRequests.slice(0, 3).map((request) => (
+              {pendingRequests.slice(0, 3).map((request: any) => (
                 <div key={request.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
                   <div>
                     <p className="text-white font-medium">{request.title}</p>
