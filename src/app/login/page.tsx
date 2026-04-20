@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, Sparkles } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { Eye, EyeOff, Lock, Sparkles, Shield } from 'lucide-react';
+import { authenticateUser } from '@/lib/auth-enhanced';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -19,36 +19,18 @@ export default function LoginPage() {
     setIsLoading(true);
     setMessage('');
 
-    console.log('Login attempt:', { username, accessCode });
-
     try {
-      // Query Supabase for username and access code
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', username)
-        .eq('access_code', accessCode)
-        .maybeSingle();
+      const result = await authenticateUser(username, accessCode);
 
-      console.log('Supabase response:', { data, error });
-
-      if (error) {
-        console.error('Supabase error:', error);
-        setMessage(`Database error: ${error.message}`);
-      } else if (!data) {
-        console.log('No user found');
-        setMessage('Invalid username or access code');
+      if (result.success && result.user) {
+        // Redirect based on user role
+        if (result.user.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
-        console.log('Login successful:', data);
-        // Store user in localStorage with 2-day session
-        localStorage.setItem('currentUser', JSON.stringify(data));
-        
-        // Set session expiry for 2 days
-        const expiry = new Date();
-        expiry.setDate(expiry.getDate() + 2);
-        localStorage.setItem('sessionExpiry', expiry.toISOString());
-        
-        router.push('/dashboard');
+        setMessage(result.error || 'Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -68,8 +50,12 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl mb-4 shadow-2xl">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">SyncRoom</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">SyncRoom Enhanced</h1>
           <p className="text-gray-300">Watch together, in perfect sync</p>
+          <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-gray-400">
+            <Shield className="w-4 h-4" />
+            <span>Admin Access: shaheer / SHAHEER123</span>
+          </div>
         </div>
 
         {/* Login Form */}

@@ -81,6 +81,15 @@ export default function RoomPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isMobile) return;
+    if (!showChat) {
+      screen.orientation?.lock?.('landscape').catch(() => {});
+    } else {
+      screen.orientation?.unlock?.();
+    }
+  }, [showChat, isMobile]);
+
   const handleVideoAction = (action: string, payload?: any) => {
     setPendingAction({ type: action, payload });
     setShowConfirmation(true);
