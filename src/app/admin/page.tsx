@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { requireAdmin } from '@/lib/auth-enhanced'
 import { supabase } from '@/lib/auth-enhanced'
