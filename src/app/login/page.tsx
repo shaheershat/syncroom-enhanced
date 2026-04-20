@@ -3,11 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, Sparkles, Shield } from 'lucide-react';
-
-const USERS = [
-  { username: 'shaheer', code: 'SHAHEER123', name: 'Shaheer', role: 'admin' as const, id: 'user-shaheer' },
-  { username: 'admin',   code: 'ADMIN123',   name: 'Admin',   role: 'admin' as const, id: 'user-admin' },
-];
+import { authenticateUser } from '@/lib/auth-actions';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -23,18 +19,25 @@ export default function LoginPage() {
     setIsLoading(true);
     setMessage('');
 
-    const match = USERS.find(
-      u => u.username === username.trim().toLowerCase() && u.code === accessCode.trim()
-    );
+    try {
+      const result = await authenticateUser(username.trim(), accessCode.trim());
 
-    if (match) {
-      const user = { id: match.id, name: match.name, username: match.username, role: match.role };
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      // Set session cookie so proxy allows access to protected routes
-      document.cookie = `syncroom_session=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=${2 * 24 * 60 * 60}`;
-      router.push(match.role === 'admin' ? '/admin' : '/dashboard');
-    } else {
-      setMessage('Invalid username or access code');
+      if (result.success && result.user) {
+        const user = {
+          id: result.user.id,
+          name: result.user.name,
+          username: result.user.username,
+          role: result.user.role,
+        };
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        document.cookie = `syncroom_session=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=${2 * 24 * 60 * 60}`;
+        router.push(result.user.role === 'admin' ? '/admin' : '/dashboard');
+      } else {
+        setMessage(result.error || 'Invalid username or access code');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      setMessage('Login failed. Please try again.');
       setIsLoading(false);
     }
   };
