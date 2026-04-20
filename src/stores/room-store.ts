@@ -1,13 +1,10 @@
 import { create } from 'zustand';
 import { RoomStore, RoomWithDetails, RoomPresence, RoomState, MessageWithUser } from '@/types';
-import { 
-  supabase, 
-  getRoomById, 
-  updateRoomState, 
-  sendMessage, 
-  getMessages,
+import {
+  supabase,
+  updateRoomState,
   updatePresence,
-  leaveRoom 
+  leaveRoom
 } from '@/lib/supabase';
 
 export const useRoomStore = create<RoomStore>((set, get) => ({
@@ -30,9 +27,14 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
     console.log('RoomStore - Loading room:', roomId);
     set({ loading: true, error: null });
     try {
-      const room = await getRoomById(roomId);
+      const [roomRes, messagesRes] = await Promise.all([
+        fetch(`/api/data/rooms/${roomId}`).then(r => r.json()),
+        fetch(`/api/data/messages?roomId=${roomId}`).then(r => r.json()),
+      ]);
+      if (roomRes.error) throw new Error(roomRes.error);
+      const room = roomRes.room;
+      const messages = messagesRes.messages || [];
       console.log('RoomStore - Room loaded:', room);
-      const messages = await getMessages(roomId);
       console.log('RoomStore - Messages loaded:', messages);
       
       set({ 
@@ -151,9 +153,10 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
     const interval = setInterval(async () => {
       try {
         const { messages: currentMessages } = get();
-        const newMessages = await getMessages(roomId);
-        
-        if (newMessages && newMessages.length > currentMessages.length) {
+        const res = await fetch(`/api/data/messages?roomId=${roomId}`).then(r => r.json());
+        const newMessages = res.messages || [];
+
+        if (newMessages.length > currentMessages.length) {
           console.log('RoomStore - Polling found new messages:', newMessages.length - currentMessages.length);
           set({ messages: newMessages });
         }
@@ -180,26 +183,23 @@ export const useRoomStore = create<RoomStore>((set, get) => ({
     if (!room) throw new Error('No room found');
 
     try {
-      // Import the sendMessage function from supabase to avoid naming conflict
-      const { sendMessage: sendSupabaseMessage } = await import('@/lib/supabase');
-      const newMessage = await sendSupabaseMessage(room.id, message);
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (!currentUser) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/data/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room_id: room.id, user_id: currentUser.id, message }),
+      }).then(r => r.json());
+
+      if (res.error) throw new Error(res.error);
+      const newMessage = res.message;
       console.log('RoomStore - Adding message to local state:', newMessage);
-      
-      // Ensure proper message structure with user data
-      const messageWithUser = {
-        ...newMessage,
-        user: {
-          id: newMessage.user_id,
-          name: 'User',
-          email: ''
-        }
-      };
-      
-      // Add the new message to the local messages array
+
       set(state => ({
-        messages: [...state.messages, messageWithUser]
+        messages: [...state.messages, newMessage],
       }));
-      return messageWithUser;
+      return newMessage;
     } catch (error) {
       console.error('RoomStore - Error sending message:', error);
       set({ error: error instanceof Error ? error.message : 'Failed to send message' });
