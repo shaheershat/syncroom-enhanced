@@ -84,9 +84,9 @@ export default function RoomPage() {
   useEffect(() => {
     if (!isMobile) return;
     if (!showChat) {
-      (screen.orientation as any)?.lock?.('landscape').catch(() => {});
+      screen.orientation?.lock?.('landscape').catch(() => {});
     } else {
-      (screen.orientation as any)?.unlock?.();
+      screen.orientation?.unlock?.();
     }
   }, [showChat, isMobile]);
 
