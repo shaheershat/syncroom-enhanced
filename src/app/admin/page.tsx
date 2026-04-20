@@ -7,28 +7,31 @@ import { User, Room, Video, VideoRequest } from '@/types/enhanced-types'
 import { Shield, Users, Video as VideoIcon, Film, Calendar, MessageSquare, TrendingUp, Clock } from 'lucide-react'
 
 export default async function AdminDashboard() {
-  const user = await requireAdmin()
+  let user
+  try {
+    user = await requireAdmin()
+  } catch {
+    redirect('/login')
+  }
 
-  // Fetch dashboard statistics
-  const [
-    usersResult,
-    roomsResult,
-    videosResult,
-    requestsResult,
-    activeRoomsResult
-  ] = await Promise.all([
-    supabase.from('users').select('*'),
-    supabase.from('rooms').select('*'),
-    supabase.from('videos').select('*'),
-    supabase.from('video_requests').select('*').eq('status', 'pending'),
-    supabase.from('rooms').select('*').eq('status', 'active')
-  ])
-
-  const users = usersResult.data || []
-  const rooms = roomsResult.data || []
-  const videos = videosResult.data || []
-  const pendingRequests = requestsResult.data || []
-  const activeRooms = activeRoomsResult.data || []
+  // Fetch dashboard statistics — gracefully degrade if DB not configured
+  let users: any[] = [], rooms: any[] = [], videos: any[] = [], pendingRequests: any[] = [], activeRooms: any[] = []
+  try {
+    const [usersResult, roomsResult, videosResult, requestsResult, activeRoomsResult] = await Promise.all([
+      supabase.from('users').select('*'),
+      supabase.from('rooms').select('*'),
+      supabase.from('videos').select('*'),
+      supabase.from('video_requests').select('*').eq('status', 'pending'),
+      supabase.from('rooms').select('*').eq('status', 'active')
+    ])
+    users = usersResult.data || []
+    rooms = roomsResult.data || []
+    videos = videosResult.data || []
+    pendingRequests = requestsResult.data || []
+    activeRooms = activeRoomsResult.data || []
+  } catch {
+    // DB not configured — show empty stats
+  }
 
   const stats = {
     totalUsers: users.length,
