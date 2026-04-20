@@ -106,46 +106,23 @@ export async function getCurrentUser(): Promise<User | null> {
   try {
     const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('syncroom_session')
-    
-    if (!sessionCookie) {
-      return null
-    }
 
-    const sessionData = JSON.parse(sessionCookie.value)
-    
-    // Check if session is still valid (2 days)
-    const loginTime = new Date(sessionData.loginTime)
-    const now = new Date()
-    const diffInHours = (now.getTime() - loginTime.getTime()) / (1000 * 60 * 60)
-    
-    if (diffInHours > 48) {
-      // Session expired
-      cookieStore.delete('syncroom_session')
-      return null
-    }
+    if (!sessionCookie || !sessionCookie.value) return null
 
-    // Get fresh user data from database
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', sessionData.userId)
-      .single()
+    const data = JSON.parse(decodeURIComponent(sessionCookie.value))
 
-    if (error || !user) {
-      cookieStore.delete('syncroom_session')
-      return null
-    }
+    if (!data.id || !data.role) return null
 
     return {
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      email: user.email,
-      role: user.role as 'admin' | 'user',
-      avatar_url: user.avatar_url,
-      is_online: user.is_online,
-      last_active: user.last_active,
-      preferences: user.preferences
+      id: data.id,
+      username: data.username,
+      name: data.name,
+      email: data.email ?? undefined,
+      role: data.role as 'admin' | 'user',
+      avatar_url: data.avatar_url ?? undefined,
+      is_online: true,
+      last_active: new Date().toISOString(),
+      preferences: data.preferences ?? {}
     }
   } catch (error) {
     console.error('Session validation error:', error)

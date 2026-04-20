@@ -31,7 +31,7 @@ export default function LoginPage() {
       const user = { id: match.id, name: match.name, username: match.username, role: match.role };
       localStorage.setItem('currentUser', JSON.stringify(user));
       // Set session cookie so proxy allows access to protected routes
-      document.cookie = `syncroom_session=1; path=/; max-age=${2 * 24 * 60 * 60}`;
+      document.cookie = `syncroom_session=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=${2 * 24 * 60 * 60}`;
       router.push(match.role === 'admin' ? '/admin' : '/dashboard');
     } else {
       setMessage('Invalid username or access code');
