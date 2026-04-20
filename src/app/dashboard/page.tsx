@@ -60,18 +60,12 @@ export default function DashboardPage() {
 
           console.log('Aligned rooms data:', alignedRoomsData, 'Error:', alignedRoomsError);
 
-          const { data: videosData, error: videosError } = await supabase
-            .from('videos')
-            .select('*');
-
-          console.log('Videos data:', videosData, 'Error:', videosError);
-
-          const { data: usersData, error: usersError } = await supabase
-            .from('users')
-            .select('*')
-            .neq('id', userData.id);
-
-          console.log('Users data:', usersData, 'Error:', usersError);
+          const [videosRes, usersRes] = await Promise.all([
+            fetch('/api/data/videos').then(r => r.json()),
+            fetch('/api/data/users').then(r => r.json()),
+          ])
+          const videosData = videosRes.videos || []
+          const usersData = (usersRes.users || []).filter((u: any) => u.id !== userData.id)
 
           // Manually join video data with proper typing
           const roomsWithVideo = (roomsData || []).map((room: any) => {
