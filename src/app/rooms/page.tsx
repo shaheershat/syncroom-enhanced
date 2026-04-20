@@ -17,8 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { Room, User } from '@/types/enhanced-types'
-import { getCurrentUser } from '@/lib/auth-enhanced'
-import { supabase } from '@/lib/auth-enhanced'
+import { getCurrentUser, supabase } from '@/lib/supabase'
 
 const ROOM_CATEGORIES = [
   { id: 'active', name: 'Active Rooms', description: 'Currently active watch rooms', color: 'green' },

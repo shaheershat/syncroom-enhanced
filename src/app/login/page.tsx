@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, Sparkles, Shield } from 'lucide-react';
-import { authenticateUser } from '@/lib/auth-enhanced';
+import { authenticateUser } from '@/lib/auth-actions';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');

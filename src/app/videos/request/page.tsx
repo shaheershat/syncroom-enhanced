@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Send, X, Check, Clock, AlertCircle } from 'lucide-react'
 import { VideoRequest, User } from '@/types/enhanced-types'
-import { getCurrentUser } from '@/lib/auth-enhanced'
-import { supabase } from '@/lib/auth-enhanced'
+import { getCurrentUser, supabase } from '@/lib/supabase'
 
 export default function VideoRequestPage() {
   const [user, setUser] = useState<User | null>(null)

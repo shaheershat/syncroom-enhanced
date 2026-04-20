@@ -22,8 +22,7 @@ import {
   MoreVertical
 } from 'lucide-react'
 import { Room, User, RoomMember, Message, RoomState } from '@/types/enhanced-types'
-import { getCurrentUser } from '@/lib/auth-enhanced'
-import { supabase } from '@/lib/auth-enhanced'
+import { getCurrentUser, supabase } from '@/lib/supabase'
 
 export default function RoomPage() {
   const params = useParams()
