@@ -8,11 +8,11 @@ const getSupabase = () => createClient(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = getSupabase()
-    const roomId = params.id
+    const { id: roomId } = await params
 
     const { data: roomData, error: roomError } = await supabase
       .from('rooms')
