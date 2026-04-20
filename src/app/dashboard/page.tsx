@@ -36,7 +36,14 @@ export default function DashboardPage() {
     const simpleUser = localStorage.getItem('currentUser');
     if (simpleUser) {
       const userData = JSON.parse(simpleUser);
-      console.log('Dashboard loaded with user:', userData);
+      // Detect stale hardcoded IDs (real IDs are UUIDs)
+      const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userData.id);
+      if (!isValidUUID) {
+        localStorage.removeItem('currentUser');
+        document.cookie = 'syncroom_session=; path=/; max-age=0';
+        router.push('/login');
+        return;
+      }
       setCurrentUser(userData);
       
       const loadData = async () => {
